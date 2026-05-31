@@ -825,7 +825,7 @@ describe("session.message-v2.toModelMessage", () => {
     const userID = "m-user"
     const assistantID = "m-assistant"
 
-    const input: MessageV2.WithParts[] = [
+    const input: SessionLegacy.WithParts[] = [
       {
         info: userInfo(userID),
         parts: [
@@ -834,7 +834,7 @@ describe("session.message-v2.toModelMessage", () => {
             type: "text",
             text: "run tool",
           },
-        ] as MessageV2.Part[],
+        ] as SessionLegacy.Part[],
       },
       {
         info: assistantInfo(assistantID, userID),
@@ -853,7 +853,7 @@ describe("session.message-v2.toModelMessage", () => {
               time: { start: 0, end: 1 },
             },
           },
-        ] as MessageV2.Part[],
+        ] as SessionLegacy.Part[],
       },
     ]
 
@@ -895,7 +895,7 @@ describe("session.message-v2.toModelMessage", () => {
     const userID = "m-user"
     const assistantID = "m-assistant"
 
-    const input: MessageV2.WithParts[] = [
+    const input: SessionLegacy.WithParts[] = [
       {
         info: userInfo(userID),
         parts: [
@@ -904,7 +904,7 @@ describe("session.message-v2.toModelMessage", () => {
             type: "text",
             text: "hello",
           },
-        ] as MessageV2.Part[],
+        ] as SessionLegacy.Part[],
       },
       {
         info: assistantInfo(assistantID, userID),
@@ -920,7 +920,7 @@ describe("session.message-v2.toModelMessage", () => {
             type: "text",
             text: "visible answer",
           },
-        ] as MessageV2.Part[],
+        ] as SessionLegacy.Part[],
       },
     ]
 
