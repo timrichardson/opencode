@@ -134,6 +134,61 @@ const targets = singleFlag
     })
   : allTargets
 
+const tuiSmokeTestTimeout = 5000
+
+async function runSmokeTests(binaryPath: string, name: string) {
+  console.log(`Running smoke test: ${binaryPath} --version`)
+  try {
+    const versionOutput = await $`${binaryPath} --version`.text()
+    console.log(`Smoke test passed: ${versionOutput.trim()}`)
+  } catch (e) {
+    console.error(`Smoke test failed for ${name}:`, e)
+    process.exit(1)
+  }
+
+  console.log(`Running smoke test: ${binaryPath} --pure`)
+  const proc = Bun.spawn([binaryPath, "--pure"], {
+    cwd: dir,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "pipe",
+  })
+  const stdout = new Response(proc.stdout).text()
+  const stderr = new Response(proc.stderr).text()
+  const result = await Promise.race([
+    proc.exited,
+    new Promise<"timeout">((resolve) => {
+      const timer = setTimeout(() => {
+        proc.kill()
+        resolve("timeout")
+      }, tuiSmokeTestTimeout)
+      proc.exited.finally(() => clearTimeout(timer))
+    }),
+  ])
+  const output = await Promise.all([stdout, stderr])
+
+  if (result === "timeout") {
+    console.log(`Smoke test passed: TUI stayed alive for ${tuiSmokeTestTimeout}ms`)
+    return
+  }
+
+  if (result === 0) {
+    console.log("Smoke test passed: TUI exited cleanly")
+    return
+  }
+
+  console.error(`Smoke test failed for ${name}: TUI exited with code ${result}`)
+  printSmokeOutput("stdout", output[0])
+  printSmokeOutput("stderr", output[1])
+  process.exit(1)
+}
+
+function printSmokeOutput(label: string, output: string) {
+  const trimmed = output.trim()
+  if (!trimmed) return
+  console.error(`${label}:\n${trimmed.slice(-4000)}`)
+}
+
 await $`rm -rf dist`
 
 const binaries: Record<string, string> = {}
@@ -198,15 +253,7 @@ for (const item of targets) {
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/opencode`
-    console.log(`Running smoke test: ${binaryPath} --version`)
-    try {
-      const versionOutput = await $`${binaryPath} --version`.text()
-      console.log(`Smoke test passed: ${versionOutput.trim()}`)
-    } catch (e) {
-      console.error(`Smoke test failed for ${name}:`, e)
-      process.exit(1)
-    }
+    await runSmokeTests(`dist/${name}/bin/opencode`, name)
   }
 
   await $`rm -rf ./dist/${name}/bin/tui`
