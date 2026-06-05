@@ -23,6 +23,14 @@ const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
+// Bun compile can preserve separate symlink identities, which breaks OpenTUI Solid's CliRenderer instanceof check.
+const opentuiCorePath = fs.realpathSync(path.resolve(dir, "node_modules/@opentui/core/index.js"))
+const opentuiCorePlugin = {
+  name: "opentui-core-singleton",
+  setup(build: Bun.PluginBuilder) {
+    build.onResolve({ filter: /^@opentui\/core$/ }, () => ({ path: opentuiCorePath }))
+  },
+}
 
 const createEmbeddedWebUIBundle = async () => {
   console.log(`Building Web UI to embed in the binary`)
@@ -222,7 +230,7 @@ for (const item of targets) {
   await Bun.build({
     conditions: ["node"],
     tsconfig: "./tsconfig.json",
-    plugins: [plugin],
+    plugins: [opentuiCorePlugin, plugin],
     external: ["node-gyp"],
     format: "esm",
     minify: true,
