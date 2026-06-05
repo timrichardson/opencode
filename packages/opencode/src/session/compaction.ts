@@ -247,9 +247,9 @@ export const layer = Layer.effect(
     })
 
     const prepareModelMessages = Effect.fn("SessionCompaction.prepareModelMessages")(function* (input: {
-      messages: SessionLegacy.WithParts[]
+      messages: SessionV1.WithParts[]
       model: Provider.Model
-      cfg: Config.Info
+      cfg: ConfigV1.Info
       prompt: string
     }) {
       const budget = Math.floor(
