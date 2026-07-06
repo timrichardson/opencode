@@ -1,12 +1,13 @@
 export * as FileSystem from "./filesystem"
 
+import { makeLocationNode } from "./effect/app-node"
 import path from "path"
 import { Context, Effect, Layer, Schema } from "effect"
 import { FSUtil } from "./fs-util"
 import { Location } from "./location"
 import { PositiveInt, RelativePath } from "./schema"
 import { FileSystemSearch } from "./filesystem/search"
-import { Entry, FileSystem, Match } from "@opencode-ai/schema/filesystem"
+import { Entry, FileSystem, FindInput, Match } from "@opencode-ai/schema/filesystem"
 export { Entry, Match, Submatch } from "@opencode-ai/schema/filesystem"
 
 export const ReadInput = Schema.Struct({
@@ -28,11 +29,7 @@ export const ListInput = Schema.Struct({
 })
 export type ListInput = typeof ListInput.Type
 
-export class FindInput extends Schema.Class<FindInput>("FileSystem.FindInput")({
-  query: Schema.String,
-  type: Schema.Literals(["file", "directory"]).pipe(Schema.optional),
-  limit: PositiveInt.pipe(Schema.optional),
-}) {}
+export { FindInput }
 
 export class GlobInput extends Schema.Class<GlobInput>("FileSystem.GlobInput")({
   pattern: Schema.String,
@@ -114,6 +111,8 @@ const baseLayer = Layer.effect(
   }),
 )
 
-export const layer = baseLayer.pipe(Layer.provide(FileSystemSearch.locationLayer), Layer.provide(FSUtil.defaultLayer))
-
-export const locationLayer = layer
+export const node = makeLocationNode({
+  service: Service,
+  layer: baseLayer,
+  deps: [FSUtil.node, Location.node, FileSystemSearch.node],
+})
